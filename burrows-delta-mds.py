@@ -104,7 +104,7 @@ def plot_mds(delta_matrix, groups, save_as=None):
         plt.text(mds_coords[i, 0], mds_coords[i, 1], text, fontsize=9, ha='right', va='bottom')
 
     # Add titles, labels, and legend
-    plt.title("MDS Visualisation of Burrows's Delta Matrix (Colour-Coded)")
+    plt.title("MDS Visualisation of Burrows's Delta")
     plt.xlabel("MDS Dimension 1")
     plt.ylabel("MDS Dimension 2")
     plt.legend(title="Groups", loc="best")

@@ -7,7 +7,7 @@ This repository contains two Python scripts for performing stylometric analysis 
 
 ## Scripts Overview
 
-### 1. `burrows_delta_mds.py`
+### 1. `burrows-delta-mds.py`
 - Purpose Computes Burrows's Delta and visualises the results using Multidimensional Scaling (MDS).
 - Output: A scatter plot where points represent texts, and their proximity reflects stylistic similarity.
 
@@ -19,7 +19,7 @@ This repository contains two Python scripts for performing stylometric analysis 
 #### Usage:
 Run the script in your terminal:
 ```bash
-python3 burrows_delta_mds.py
+python3 burrows-delta-mds.py
 ```
 
 #### Dependencies:
@@ -29,7 +29,7 @@ python3 burrows_delta_mds.py
 - `matplotlib`
 - `scikit-learn`
 
-### 2. `burrows_delta_dendrogram.py`
+### 2. `burrows-delta-dendrogram.py`
 - Purpose: Computes Burrows's Delta and visualises the results using a dendrogram based on hierarchical clustering.
 - Output: A dendrogram where labels are colour-coded by group, extracted from the text before the first `_` in each filename.
 
@@ -42,7 +42,7 @@ python3 burrows_delta_mds.py
 #### Usage:
 Run the script in your terminal:
 ```bash
-python3 burrows_delta_dendrogram.py
+python3 burrows-delta-dendrogram.py
 ```
 
 #### Dependencies:
@@ -57,7 +57,7 @@ python3 burrows_delta_dendrogram.py
 ### Corpus
 - Both scripts expect a folder named `corpus`, containing `.txt` files.
 - Each file should represent a single text.
-- For `burrows_delta_dendrogram.py`, filenames should follow the format:  
+- For `burrows-delta-dendrogram.py`, filenames should follow the format:  
   `<group>_rest_of_filename.txt`.
 
 ### Example Folder Structure
@@ -76,10 +76,10 @@ corpus/
   - A symmetric matrix of stylistic distances between texts.
 
 ### Script-Specific Outputs
-1. MDS Script (`burrows_delta_mds.py`):
+1. MDS Script (`burrows-delta-mds.py`):
    - Scatter Plot: Saved as `mds_visualisation.png`.
 
-2. Dendrogram Script (`burrows_delta_dendrogram.py`):
+2. Dendrogram Script (`burrows-delta-dendrogram.py`):
    - Dendrogram Plot: Saved as `dendrogram_visualisation_coloured.png`.
 
 ---

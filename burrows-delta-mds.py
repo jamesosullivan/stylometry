@@ -33,12 +33,12 @@ def preprocess(text):
     filtered_tokens = [word for word in tokens if word.isalnum()]  # Remove punctuation
     return filtered_tokens
 
-# 3. Compute word frequencies
+# 3. Compute word frequencies  # Most frequent words (MFW) set to 100 by default
 def compute_frequencies(tokenised_texts, mfw=100):
     all_tokens = []
     for tokens in tokenised_texts.values():
         all_tokens.extend(tokens)
-    most_common_words = [word for word, _ in Counter(all_tokens).most_common(mfw)]  # Most frequent words (MFW)
+    most_common_words = [word for word, _ in Counter(all_tokens).most_common(mfw)] 
     
     frequencies = {}
     for name, tokens in tokenised_texts.items():

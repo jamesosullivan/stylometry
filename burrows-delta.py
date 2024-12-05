@@ -112,7 +112,7 @@ def plot_coloured_dendrogram(delta_matrix, groups, save_as=None):
         lbl.set_color(colours[group])
 
     # Add titles, labels, and legend
-    plt.title("Colour-Coded Dendrogram of Burrows's Delta Matrix")
+    plt.title("Burrows's Delta")
     plt.xlabel("Texts")
     plt.ylabel("Distance")
     plt.tight_layout()

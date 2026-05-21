@@ -2,6 +2,16 @@
 
 This repository contains updated Python scripts for stylometric analysis using Burrows's Delta and transformer embeddings.
 
+## What changed
+
+- Removed the NLTK dependency from the Burrows's Delta scripts. The scripts now use a built-in Unicode regex tokenizer, so there is no need to download `punkt` or `punkt_tab` data.
+- Replaced deprecated Matplotlib colormap usage with the current `matplotlib.colormaps` API.
+- Removed the forced `TkAgg` backend from the MDS script. This makes the scripts less brittle on macOS, virtual environments, VS Code, and headless systems.
+- Added automatic dependency checks and optional auto-installation. Each script installs missing packages with the same Python interpreter used to run the script.
+- Added command-line options for corpus paths, output paths, MFW counts, plot display, and related settings.
+- Made Burrows's Delta use relative frequencies per 1,000 tokens by default, which is safer for texts of different lengths. Use `--raw-counts` to reproduce the older raw-count behaviour.
+- Updated the RoBERTa workflow to embed long documents in chunks, average chunk embeddings by document, save cosine distances, save PCA coordinates, and save plots automatically.
+
 ## Files
 
 - `burrows-delta-mds.py`: Computes Burrows's Delta and visualises the results using Multidimensional Scaling (MDS).
@@ -9,7 +19,26 @@ This repository contains updated Python scripts for stylometric analysis using B
 - `roberta-embeddings.py`: Computes document-level SentenceTransformer embeddings, cosine distances, and PCA visualisations.
 - `RoBERTa-embeddings.py`: Compatibility wrapper for the old mixed-case filename.
 - `stylometry_utils.py`: Shared helper functions used by the scripts.
-- `requirements.txt`: Optional dependency list for manual installation.
+- `requirements.txt`: Dependency list used by the scripts for checking/auto-installation and by users for manual installation.
+
+## How to cite
+
+Please cite this software as:
+
+> O'Sullivan, James. *Stylometry: Python scripts for Burrows's Delta and transformer embeddings*. University College Cork. Software.
+
+Suggested BibTeX:
+
+```bibtex
+@software{osullivan_stylometry,
+  author = {O'Sullivan, James},
+  title = {Stylometry: Python scripts for Burrows's Delta and transformer embeddings},
+  institution = {University College Cork},
+  type = {Software}
+}
+```
+
+If you archive or release this repository through Zenodo, GitHub Releases, or another repository, add the version number, release year, and DOI to the citation.
 
 ## Recommended setup
 
@@ -117,6 +146,14 @@ The first run of the RoBERTa script may download the selected model from Hugging
 Burrows's Delta is based on standardised most-frequent-word frequencies. The scripts now use relative frequency per 1,000 tokens by default to reduce text-length effects. If you need strict continuity with the older scripts, use `--raw-counts`.
 
 The embedding script is exploratory. SentenceTransformer embeddings capture semantic and stylistic signals together, so PCA clusters should not be treated as pure style attribution without further validation.
+
+## License
+
+This project is licensed under the MIT License.
+
+Copyright (c) 2024 James O'Sullivan.
+
+See the `LICENSE` file for the full license text. In summary, the MIT License permits use, copying, modification, merging, publication, distribution, sublicensing, and sale of copies of the software, provided that the copyright notice and permission notice are included in copies or substantial portions of the software. The software is provided without warranty.
 
 ## Troubleshooting
 

@@ -10,13 +10,21 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from stylometry_utils import ensure_dependencies
+try:
+    from stylometry_utils import ensure_requirements
+except ModuleNotFoundError as exc:
+    if exc.name == "stylometry_utils":
+        raise SystemExit(
+            "Could not find stylometry_utils.py. Put stylometry_utils.py in the same folder "
+            "as this script, then run the command again."
+        ) from None
+    raise
 
-REQUIRED_PACKAGES = {
-    "numpy": "numpy>=1.24",
-    "pandas": "pandas>=2.0",
-    "matplotlib": "matplotlib>=3.8",
-    "scipy": "scipy>=1.10",
+REQUIRED_IMPORTS = {
+    "numpy": "numpy",
+    "pandas": "pandas",
+    "matplotlib": "matplotlib",
+    "scipy": "scipy",
 }
 
 
@@ -107,7 +115,7 @@ def plot_coloured_dendrogram(
 
 def main() -> None:
     args = parse_args()
-    ensure_dependencies(REQUIRED_PACKAGES, auto_install=not args.no_auto_install)
+    ensure_requirements(REQUIRED_IMPORTS, auto_install=not args.no_auto_install)
 
     from stylometry_utils import (
         calculate_z_scores,

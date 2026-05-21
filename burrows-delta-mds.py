@@ -11,13 +11,21 @@ import argparse
 import inspect
 from pathlib import Path
 
-from stylometry_utils import ensure_dependencies
+try:
+    from stylometry_utils import ensure_requirements
+except ModuleNotFoundError as exc:
+    if exc.name == "stylometry_utils":
+        raise SystemExit(
+            "Could not find stylometry_utils.py. Put stylometry_utils.py in the same folder "
+            "as this script, then run the command again."
+        ) from None
+    raise
 
-REQUIRED_PACKAGES = {
-    "numpy": "numpy>=1.24",
-    "pandas": "pandas>=2.0",
-    "sklearn": "scikit-learn>=1.4",
-    "matplotlib": "matplotlib>=3.8",
+REQUIRED_IMPORTS = {
+    "numpy": "numpy",
+    "pandas": "pandas",
+    "sklearn": "scikit-learn",
+    "matplotlib": "matplotlib",
 }
 
 
@@ -106,7 +114,7 @@ def plot_mds(delta_matrix, groups, output_path: str | Path, show: bool, cmap_nam
 
 def main() -> None:
     args = parse_args()
-    ensure_dependencies(REQUIRED_PACKAGES, auto_install=not args.no_auto_install)
+    ensure_requirements(REQUIRED_IMPORTS, auto_install=not args.no_auto_install)
 
     from stylometry_utils import (
         calculate_z_scores,

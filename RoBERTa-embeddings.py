@@ -10,14 +10,22 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from stylometry_utils import ensure_dependencies
+try:
+    from stylometry_utils import ensure_requirements
+except ModuleNotFoundError as exc:
+    if exc.name == "stylometry_utils":
+        raise SystemExit(
+            "Could not find stylometry_utils.py. Put stylometry_utils.py in the same folder "
+            "as this script, then run the command again."
+        ) from None
+    raise
 
-REQUIRED_PACKAGES = {
-    "numpy": "numpy>=1.24",
-    "pandas": "pandas>=2.0",
-    "sklearn": "scikit-learn>=1.4",
-    "matplotlib": "matplotlib>=3.8",
-    "sentence_transformers": "sentence-transformers>=3.0",
+REQUIRED_IMPORTS = {
+    "numpy": "numpy",
+    "pandas": "pandas",
+    "sklearn": "scikit-learn",
+    "matplotlib": "matplotlib",
+    "sentence_transformers": "sentence-transformers",
 }
 
 
@@ -217,7 +225,7 @@ def plot_labelled_pca(pca_df, output_prefix: str, show: bool) -> Path:
 
 def main() -> None:
     args = parse_args()
-    ensure_dependencies(REQUIRED_PACKAGES, auto_install=not args.no_auto_install)
+    ensure_requirements(REQUIRED_IMPORTS, auto_install=not args.no_auto_install)
 
     from stylometry_utils import load_texts_from_folder
 

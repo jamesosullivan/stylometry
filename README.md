@@ -147,6 +147,27 @@ See the `LICENSE` file for the full license text. In summary, the MIT License pe
 
 ## Troubleshooting
 
+
+### `ModuleNotFoundError: No module named 'stylometry_utils'`
+
+Keep `stylometry_utils.py` in the same folder as the scripts. For example:
+
+```text
+commonwealth/
+├── burrows-delta-mds.py
+├── burrows-delta-dendrogram.py
+├── roberta-embeddings.py
+├── stylometry_utils.py
+├── requirements.txt
+└── corpus/
+```
+
+Do not copy only `burrows-delta-mds.py` into a new folder unless you also copy `stylometry_utils.py` and `requirements.txt`.
+
+### Dependencies install but are still reported as missing
+
+The dependency checker now distinguishes between import names, such as `sklearn`, and package names, such as `scikit-learn>=1.4`. If pip installs packages into the macOS user-site directory during a running script, the script will restart once so the new packages are visible.
+
 ### A plot does not open
 
 Use `--no-show` to save the plot without opening a GUI window:

@@ -1,141 +1,146 @@
-import os
-import nltk
-from collections import Counter
-import pandas as pd
-import numpy as np
-from sklearn.manifold import MDS
-import matplotlib.pyplot as plt
-import matplotlib
+#!/usr/bin/env python3
+"""Burrows's Delta with MDS visualisation.
 
-# Force Matplotlib to use a compatible backend
-matplotlib.use('TkAgg')
+Updated version: no NLTK data dependency, no deprecated Matplotlib get_cmap API,
+explicit scikit-learn MDS defaults, command-line options, and dependency checks.
+"""
 
-# Load the punkt resource
-from nltk.tokenize import word_tokenize
-from matplotlib.cm import get_cmap
+from __future__ import annotations
 
-# Path to the folder containing text files
-CORPUS_FOLDER = "corpus"
+import argparse
+import inspect
+from pathlib import Path
 
-# 1. Load texts from the folder
-def load_texts_from_folder(folder_path):
-    texts = {}
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".txt"):
-            file_path = os.path.join(folder_path, filename)
-            with open(file_path, 'r', encoding='utf-8') as file:
-                texts[filename] = file.read()
-    return texts
+from stylometry_utils import ensure_dependencies
 
-# 2. Preprocess texts
-def preprocess(text):
-    tokens = word_tokenize(text.lower())  # Tokenise and lowercase
-    filtered_tokens = [word for word in tokens if word.isalnum()]  # Remove punctuation
-    return filtered_tokens
+REQUIRED_PACKAGES = {
+    "numpy": "numpy>=1.24",
+    "pandas": "pandas>=2.0",
+    "sklearn": "scikit-learn>=1.4",
+    "matplotlib": "matplotlib>=3.8",
+}
 
-# 3. Compute word frequencies  # Most frequent words (MFW) set to 100 by default
-def compute_frequencies(tokenised_texts, mfw=100):
-    all_tokens = []
-    for tokens in tokenised_texts.values():
-        all_tokens.extend(tokens)
-    most_common_words = [word for word, _ in Counter(all_tokens).most_common(mfw)] 
-    
-    frequencies = {}
-    for name, tokens in tokenised_texts.items():
-        word_counts = Counter(tokens)
-        frequencies[name] = {word: word_counts[word] for word in most_common_words}
-    return pd.DataFrame(frequencies).fillna(0)
 
-# 4. Calculate z-scores
-def calculate_z_scores(frequency_matrix):
-    return frequency_matrix.apply(lambda col: (col - col.mean()) / col.std(), axis=1)
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Compute Burrows's Delta and plot an MDS map.")
+    parser.add_argument("--corpus", default="corpus", help="Folder containing .txt files. Default: corpus")
+    parser.add_argument("--mfw", type=int, default=100, help="Number of most frequent words. Default: 100")
+    parser.add_argument(
+        "--raw-counts",
+        action="store_true",
+        help="Use raw counts instead of relative frequencies per 1,000 tokens.",
+    )
+    parser.add_argument("--matrix-out", default="burrows_delta_matrix.csv", help="CSV output path for the distance matrix.")
+    parser.add_argument("--plot-out", default="mds_visualisation_coloured.png", help="PNG output path for the MDS plot.")
+    parser.add_argument("--cmap", default="tab10", help="Matplotlib colour map name. Default: tab10")
+    parser.add_argument("--random-state", type=int, default=42, help="Random seed for MDS. Default: 42")
+    parser.add_argument("--n-init", type=int, default=4, help="MDS initialisations. Explicit to avoid future default changes. Default: 4")
+    parser.add_argument("--no-show", action="store_true", help="Save the plot but do not open a plot window.")
+    parser.add_argument("--no-auto-install", action="store_true", help="Check dependencies but do not install missing packages.")
+    return parser.parse_args()
 
-# 5. Compute Burrows's Delta
-def compute_delta(z_matrix):
-    delta_matrix = pd.DataFrame(index=z_matrix.columns, columns=z_matrix.columns)
-    for text1 in z_matrix.columns:
-        for text2 in z_matrix.columns:
-            delta = np.mean(np.abs(z_matrix[text1] - z_matrix[text2]))
-            delta_matrix.loc[text1, text2] = delta
-    # Symmetrise the matrix
-    delta_matrix = delta_matrix.fillna(0)  # Replace NaNs
-    delta_matrix = (delta_matrix + delta_matrix.T) / 2  # Ensure symmetry
-    np.fill_diagonal(delta_matrix.values, 0)  # Diagonal must be 0
-    return delta_matrix
 
-# 6. Extract Groups for Colour Coding
-def extract_groups(filenames):
-    """
-    Extract groups from filenames based on the text before the first `_`.
+def build_mds_model(random_state: int, n_init: int):
+    """Create an MDS model while staying compatible across scikit-learn versions."""
+    from sklearn.manifold import MDS
 
-    Args:
-        filenames (list): List of filenames.
+    signature = inspect.signature(MDS)
+    kwargs = {
+        "n_components": 2,
+        "random_state": random_state,
+        "n_init": n_init,
+    }
 
-    Returns:
-        list: Groups for each filename.
-    """
-    return [filename.split('_')[0] for filename in filenames]
+    # scikit-learn 1.8 renamed `dissimilarity="precomputed"` to
+    # `metric="precomputed"`. Older versions used `metric` as a bool for
+    # metric/non-metric MDS, so inspect the default before choosing the API.
+    metric_param = signature.parameters.get("metric")
+    if metric_param is not None and isinstance(metric_param.default, str):
+        kwargs["metric"] = "precomputed"
+    else:
+        kwargs["dissimilarity"] = "precomputed"
 
-# 7. Visualise Delta Matrix with Colour-Coded MDS
-def plot_mds(delta_matrix, groups, save_as=None):
-    """
-    Visualise the Burrows's Delta matrix using Multidimensional Scaling (MDS)
-    with colour-coded dots based on groups.
+    if "normalized_stress" in signature.parameters:
+        kwargs["normalized_stress"] = "auto"
+    if "init" in signature.parameters:
+        # Preserve the historical behaviour rather than relying on a changing default.
+        kwargs["init"] = "random"
+    return MDS(**kwargs)
 
-    Args:
-        delta_matrix (pd.DataFrame): Pairwise distances between texts.
-        groups (list): Groups for colour coding.
-        save_as (str, optional): File path to save the plot. Defaults to None.
-    """
-    # Perform MDS
-    mds = MDS(n_components=2, dissimilarity="precomputed", random_state=42)
-    mds_coords = mds.fit_transform(delta_matrix.values)
 
-    # Map groups to colours
-    unique_groups = list(set(groups))
-    cmap = get_cmap("tab10")
-    colours = {group: cmap(i / len(unique_groups)) for i, group in enumerate(unique_groups)}
+def plot_mds(delta_matrix, groups, output_path: str | Path, show: bool, cmap_name: str, random_state: int, n_init: int) -> Path:
+    import matplotlib.pyplot as plt
 
-    # Create scatter plot
-    plt.figure(figsize=(10, 8))
-    for i, text in enumerate(delta_matrix.columns):
+    from stylometry_utils import ensure_output_parent, make_group_colours
+
+    model = build_mds_model(random_state=random_state, n_init=n_init)
+    coords = model.fit_transform(delta_matrix.to_numpy(dtype=float))
+
+    colours = make_group_colours(groups, cmap_name=cmap_name)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    labelled_groups: set[str] = set()
+
+    for i, text_name in enumerate(delta_matrix.columns):
         group = groups[i]
-        plt.scatter(mds_coords[i, 0], mds_coords[i, 1], c=[colours[group]], s=100, label=group if group not in plt.gca().get_legend_handles_labels()[1] else None)
-        plt.text(mds_coords[i, 0], mds_coords[i, 1], text, fontsize=9, ha='right', va='bottom')
+        label = group if group not in labelled_groups else None
+        ax.scatter(coords[i, 0], coords[i, 1], color=colours[group], s=100, label=label)
+        ax.annotate(str(text_name), (coords[i, 0], coords[i, 1]), fontsize=9, ha="right", va="bottom")
+        labelled_groups.add(group)
 
-    # Add titles, labels, and legend
-    plt.title("MDS Visualisation of Burrows's Delta")
-    plt.xlabel("MDS Dimension 1")
-    plt.ylabel("MDS Dimension 2")
-    plt.legend(title="Groups", loc="best")
-    plt.grid(True)
-    plt.tight_layout()
+    ax.set_title("MDS Visualisation of Burrows's Delta")
+    ax.set_xlabel("MDS Dimension 1")
+    ax.set_ylabel("MDS Dimension 2")
+    ax.grid(True, alpha=0.3)
+    ax.legend(title="Groups", loc="best")
+    fig.tight_layout()
 
-    # Save or show plot
-    if save_as:
-        plt.savefig(save_as)
-        print(f"Plot saved as '{save_as}'.")
-    plt.show()
+    path = ensure_output_parent(output_path)
+    fig.savefig(path, dpi=300, bbox_inches="tight")
+    print(f"Plot saved as '{path}'.")
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+    return path
 
-# Main script
-if __name__ == "__main__":
-    # Ensure the corpus folder exists
-    if not os.path.exists(CORPUS_FOLDER):
-        raise FileNotFoundError(f"The folder '{CORPUS_FOLDER}' does not exist.")
 
-    # Load, preprocess, and analyse texts
-    texts = load_texts_from_folder(CORPUS_FOLDER)
-    preprocessed_texts = {key: preprocess(value) for key, value in texts.items()}
-    frequency_matrix = compute_frequencies(preprocessed_texts, mfw=100)  # MFW set to 100
+def main() -> None:
+    args = parse_args()
+    ensure_dependencies(REQUIRED_PACKAGES, auto_install=not args.no_auto_install)
+
+    from stylometry_utils import (
+        calculate_z_scores,
+        compute_burrows_delta,
+        compute_frequency_matrix,
+        extract_groups,
+        load_texts_from_folder,
+        save_dataframe_csv,
+        tokenise_corpus,
+    )
+
+    texts = load_texts_from_folder(args.corpus)
+    if len(texts) < 2:
+        raise ValueError("At least two .txt files are required for MDS.")
+
+    tokenised_texts = tokenise_corpus(texts)
+    frequency_matrix = compute_frequency_matrix(tokenised_texts, mfw=args.mfw, relative=not args.raw_counts)
     z_scores = calculate_z_scores(frequency_matrix)
-    delta_matrix = compute_delta(z_scores)
+    delta_matrix = compute_burrows_delta(z_scores)
 
-    # Extract groups for colour coding
+    matrix_path = save_dataframe_csv(delta_matrix, args.matrix_out)
+    print(f"Delta matrix saved as '{matrix_path}'.")
+
     groups = extract_groups(delta_matrix.columns)
+    plot_mds(
+        delta_matrix,
+        groups,
+        output_path=args.plot_out,
+        show=not args.no_show,
+        cmap_name=args.cmap,
+        random_state=args.random_state,
+        n_init=args.n_init,
+    )
 
-    # Save Delta Matrix to a CSV file
-    delta_matrix.to_csv("burrows_delta_matrix.csv")
-    print("\nDelta matrix saved as 'burrows_delta_matrix.csv'.")
-    
-    # Plot MDS with colour coding
-    plot_mds(delta_matrix, groups, save_as="mds_visualisation_coloured.png")
+
+if __name__ == "__main__":
+    main()

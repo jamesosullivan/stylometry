@@ -1,169 +1,145 @@
 # Stylometry
 
-This repository contains Python scripts for performing stylometric analysis using various techniques:
+This repository contains updated Python scripts for stylometric analysis using Burrows's Delta and transformer embeddings.
 
-1. **`burrows-delta-mds.py`**: Computes Burrows's Delta and visualises the results using Multidimensional Scaling (MDS).
-2. **`burrows-delta-dendrogram.py`**: Computes Burrows's Delta and visualises the results using a dendrogram based on hierarchical clustering.
-3. **`roberta-embeddings.py`**: Analyses stylistic similarities among literary texts using the RoBERTa model for embedding generation, dimensionality reduction via PCA, and visualisation through scatter plots.
+## Files
 
-## Scripts Overview
+- `burrows-delta-mds.py`: Computes Burrows's Delta and visualises the results using Multidimensional Scaling (MDS).
+- `burrows-delta-dendrogram.py`: Computes Burrows's Delta and visualises the results using a hierarchical clustering dendrogram.
+- `roberta-embeddings.py`: Computes document-level SentenceTransformer embeddings, cosine distances, and PCA visualisations.
+- `RoBERTa-embeddings.py`: Compatibility wrapper for the old mixed-case filename.
+- `stylometry_utils.py`: Shared helper functions used by the scripts.
+- `requirements.txt`: Optional dependency list for manual installation.
 
-### 1. `burrows-delta-mds.py`
+## Recommended setup
 
-**Purpose**: Computes Burrows's Delta and visualises the results using Multidimensional Scaling (MDS).
+Use a virtual environment so automatic installation does not modify your system Python:
 
-**Output**: A scatter plot where points represent texts, and their proximity reflects stylistic similarity.
-
-#### Features:
-- Most Frequent Words (MFW): Set to 100 by default.
-- Saves the Burrows's Delta matrix as `burrows_delta_matrix.csv`.
-- Saves the MDS visualisation as `mds_visualisation.png`.
-
-#### Usage:
-Run the script in your terminal:
 ```bash
-python3 burrows-delta-mds.py
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-#### Dependencies:
-- `nltk`
-- `pandas`
-- `numpy`
-- `matplotlib`
-- `scikit-learn`
+Manual installation is optional because the scripts can install missing dependencies themselves. To disable auto-installation and only check dependencies, add `--no-auto-install`.
 
-### 2. `burrows-delta-dendrogram.py`
+## Corpus layout
 
-**Purpose**: Computes Burrows's Delta and visualises the results using a dendrogram based on hierarchical clustering.
+The Burrows's Delta scripts expect a folder of `.txt` files. By default, the folder is called `corpus`:
 
-**Output**: A dendrogram where labels are colour-coded by group, extracted from the text before the first `_` in each filename.
-
-#### Features:
-- Linkage Method: Uses average linkage (default in stylometry for balanced clustering).
-- Colour-Coded Labels: Groups are derived from the filenames (e.g., `group_filename.txt`).
-- Saves the Burrows's Delta matrix as `burrows_delta_matrix.csv`.
-- Saves the dendrogram visualisation as `dendrogram_visualisation_coloured.png`.
-
-#### Usage:
-Run the script in your terminal:
-```bash
-python3 burrows-delta-dendrogram.py
-```
-
-#### Dependencies:
-- `nltk`
-- `pandas`
-- `numpy`
-- `matplotlib`
-- `scipy`
-
-### 3. `roberta-embeddings.py`
-
-**Purpose**: Analyses stylistic similarities among literary texts using the RoBERTa model for embedding generation, dimensionality reduction via PCA, and visualisation through scatter plots.
-
-## Input Requirements
-
-### Corpus
-
-Both `burrows-delta` scripts expect a folder named `corpus` containing `.txt` files. Each file should represent a single text. 
-
-For `burrows-delta-dendrogram.py`, filenames should follow the format:
-```
-<group>_rest_of_filename.txt
-```
-
-For `roberta-embeddings.py`, the folder should be named `lit-families` on your Desktop. Filenames should follow the structure:
-```
-surname_firstinitial_title.txt
-```
-
-### Example Folder Structure
-```
+```text
 corpus/
 ├── group1_text1.txt
 ├── group1_text2.txt
 ├── group2_text1.txt
 ├── group2_text2.txt
 ```
-```
+
+Group labels are taken from the filename text before the first underscore. For example, `Joyce_Ulysses.txt` is assigned to group `Joyce`.
+
+The RoBERTa script defaults to `~/Desktop/lit-families`, but you can use any folder with `--corpus`:
+
+```text
 lit-families/
 ├── Joyce_J_Ulysses.txt
 ├── Woolf_V_ToTheLighthouse.txt
 ```
 
-## Outputs
+For the RoBERTa script, plot labels are taken from the first two underscore-separated filename parts, for example `Joyce_J`.
 
-### Common Outputs
+## Usage
 
-- Delta Matrix: Saved as `burrows_delta_matrix.csv`. A symmetric matrix of stylistic distances between texts.
+### Burrows's Delta MDS
 
-### Script-Specific Outputs
-
-1. **MDS Script (`burrows-delta-mds.py`)**:
-   - Scatter Plot: Saved as `mds_visualisation.png`.
-
-2. **Dendrogram Script (`burrows-delta-dendrogram.py`)**:
-   - Dendrogram Plot: Saved as `dendrogram_visualisation_coloured.png`.
-
-3. **RoBERTa Script (`roberta-embeddings.py`)**:
-   - Scatter plots are displayed in separate windows but are not saved automatically.
-
-## Customisation
-
-### Adjusting Most Frequent Words (MFW)
-
-Both `burrows-delta` scripts use the top 100 Most Frequent Words (MFW) by default. To change this, modify the `mfw` parameter in the `compute_frequencies` function:
-```python
-frequency_matrix = compute_frequencies(preprocessed_texts, mfw=200)  # Example: Use 200 MFW
-```
-
-### Changing Linkage Method in Dendrogram
-
-The dendrogram script uses average linkage by default. To change the method, update the `linkage` function:
-```python
-linkage_matrix = linkage(condensed_matrix, method='complete')  # Use complete linkage
-```
-Available methods: `'single'`, `'complete'`, `'average'`, `'ward'`.
-
-### RoBERTa Visualisation Saving
-
-To save the visualisations from `roberta-embeddings.py`, modify the `plt.show()` lines to include saving functionality, such as:
-```python
-plt.savefig('plot1.png')
-```
-
-## Dependencies
-
-Install required Python packages using pip:
 ```bash
-pip install nltk pandas numpy matplotlib scipy scikit-learn sentence-transformers
+python burrows-delta-mds.py --corpus corpus --mfw 100
 ```
 
-## How to Run Scripts
+Outputs:
 
-1. Place the respective script in any directory on your machine.
-2. Ensure the required folder (`corpus` or `lit-families`) exists and contains `.txt` files.
-3. Run the script using:
+- `burrows_delta_matrix.csv`
+- `mds_visualisation_coloured.png`
+
+Useful options:
+
 ```bash
-python <script_name>.py
+python burrows-delta-mds.py --corpus corpus --mfw 200 --no-show
+python burrows-delta-mds.py --corpus corpus --raw-counts
+python burrows-delta-mds.py --corpus corpus --matrix-out outputs/delta.csv --plot-out outputs/mds.png
 ```
-4. View the generated plots or outputs.
 
-## Notes
+### Burrows's Delta dendrogram
 
-- **Model Choice**: `roberta-embeddings.py` uses `all-roberta-large-v1`, a RoBERTa-based transformer model trained for sentence embeddings. 
-- **Customisation**: You can replace the model with any `SentenceTransformer` model. Update the following line:
-```python
-model = SentenceTransformer('all-roberta-large-v1')
+```bash
+python burrows-delta-dendrogram.py --corpus corpus --mfw 100
 ```
-- **Text Preprocessing**: Minimal preprocessing is applied. Add additional steps if needed for your corpus.
+
+Outputs:
+
+- `burrows_delta_matrix.csv`
+- `dendrogram_visualisation_coloured.png`
+
+Useful options:
+
+```bash
+python burrows-delta-dendrogram.py --corpus corpus --mfw 200 --legend --no-show
+python burrows-delta-dendrogram.py --corpus corpus --linkage-method complete
+python burrows-delta-dendrogram.py --corpus corpus --matrix-out outputs/delta.csv --plot-out outputs/dendrogram.png
+```
+
+### RoBERTa / SentenceTransformer embeddings
+
+```bash
+python roberta-embeddings.py --corpus ~/Desktop/lit-families
+```
+
+Outputs:
+
+- `roberta_cosine_distance_matrix.csv`
+- `roberta_pca_coordinates.csv`
+- `roberta_pca_by_author.png`
+- `roberta_pca_labelled.png`
+
+Useful options:
+
+```bash
+python roberta-embeddings.py --corpus corpus --model sentence-transformers/all-roberta-large-v1 --no-show
+python roberta-embeddings.py --corpus corpus --chunk-words 300 --batch-size 8
+python roberta-embeddings.py --corpus corpus --device mps
+python roberta-embeddings.py --corpus corpus --output-prefix outputs/roberta_run1
+```
+
+The first run of the RoBERTa script may download the selected model from Hugging Face. The default model is `sentence-transformers/all-roberta-large-v1`.
+
+## Notes on interpretation
+
+Burrows's Delta is based on standardised most-frequent-word frequencies. The scripts now use relative frequency per 1,000 tokens by default to reduce text-length effects. If you need strict continuity with the older scripts, use `--raw-counts`.
+
+The embedding script is exploratory. SentenceTransformer embeddings capture semantic and stylistic signals together, so PCA clusters should not be treated as pure style attribution without further validation.
 
 ## Troubleshooting
 
-1. **No Plots Displayed**:
-   - Ensure `matplotlib` is installed.
-   - Check for errors during PCA or embedding generation.
+### A plot does not open
 
-2. **Incorrect Labels**:
-   - Verify the file naming structure. Non-conforming files are labelled as "Unknown."
+Use `--no-show` to save the plot without opening a GUI window:
 
+```bash
+python burrows-delta-mds.py --no-show
+```
+
+### A package will not install automatically
+
+Install dependencies manually:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### The RoBERTa model is slow or too large
+
+Use a smaller SentenceTransformer model:
+
+```bash
+python roberta-embeddings.py --model sentence-transformers/all-MiniLM-L6-v2
+```

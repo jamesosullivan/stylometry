@@ -2,16 +2,6 @@
 
 This repository contains updated Python scripts for stylometric analysis using Burrows's Delta and transformer embeddings.
 
-## What changed
-
-- Removed the NLTK dependency from the Burrows's Delta scripts. The scripts now use a built-in Unicode regex tokenizer, so there is no need to download `punkt` or `punkt_tab` data.
-- Replaced deprecated Matplotlib colormap usage with the current `matplotlib.colormaps` API.
-- Removed the forced `TkAgg` backend from the MDS script. This makes the scripts less brittle on macOS, virtual environments, VS Code, and headless systems.
-- Added automatic dependency checks and optional auto-installation. Each script installs missing packages with the same Python interpreter used to run the script.
-- Added command-line options for corpus paths, output paths, MFW counts, plot display, and related settings.
-- Made Burrows's Delta use relative frequencies per 1,000 tokens by default, which is safer for texts of different lengths. Use `--raw-counts` to reproduce the older raw-count behaviour.
-- Updated the RoBERTa workflow to embed long documents in chunks, average chunk embeddings by document, save cosine distances, save PCA coordinates, and save plots automatically.
-
 ## Files
 
 - `burrows-delta-mds.py`: Computes Burrows's Delta and visualises the results using Multidimensional Scaling (MDS).
@@ -23,9 +13,9 @@ This repository contains updated Python scripts for stylometric analysis using B
 
 ## How to cite
 
-Please cite this software as:
+Please cite this software as created by:
 
-> O'Sullivan, James. *Stylometry: Python scripts for Burrows's Delta and transformer embeddings*. University College Cork. Software.
+> O'Sullivan, James, University College Cork. URL.
 
 Suggested BibTeX:
 
